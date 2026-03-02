@@ -1,170 +1,364 @@
-const chatContainer = document.getElementById('chat-container');
-const userInput = document.getElementById('user-input');
-const apiKeyInput = document.getElementById('ui-api-key');
-const imageUpload = document.getElementById('image-upload');
-const imagePreviewContainer = document.getElementById('image-preview-container');
-const imagePreview = document.getElementById('image-preview');
+/* ═══════════════════════════════════════════════════════════
+   COLLEGE AI ENTERPRISE — Full JavaScript
+   Auth, Chat, Admin Panel, API Key management
+═══════════════════════════════════════════════════════════ */
 
-let currentImageB64 = null;
+let currentUser = null;
+let sessionToken = null;
+let isGenerating = false;
 
-// Load API Key from LocalStorage
-window.onload = () => {
-    const savedKey = localStorage.getItem('college_api_key');
-    if (savedKey) {
-        apiKeyInput.value = savedKey;
+// ── Init ─────────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', async () => {
+    const savedToken = localStorage.getItem('college_token');
+    if (savedToken) {
+        sessionToken = savedToken;
+        const user = await fetchMe();
+        if (user) {
+            loginSuccess(user);
+            return;
+        }
+        localStorage.removeItem('college_token');
     }
-};
+    showAuthScreen();
+});
 
-function saveApiKey() {
-    localStorage.setItem('college_api_key', apiKeyInput.value);
+// ── Auth Screen ───────────────────────────────────────────
+function showAuthScreen() {
+    document.getElementById('auth-screen').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
 }
 
-function showKeyManager() {
-    document.getElementById('chat-view').style.display = 'none';
-    document.getElementById('key-view').style.display = 'flex';
+function showApp() {
+    document.getElementById('auth-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'flex';
 }
 
-function previewImage() {
-    const file = imageUpload.files[0];
-    if (file) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            imagePreview.src = e.target.result;
-            currentImageB64 = e.target.result; // Data URL format
-            imagePreviewContainer.style.display = 'flex';
-        };
-        reader.readAsDataURL(file);
+function switchTab(tab) {
+    document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+    document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+    document.getElementById('login-form').style.display = tab === 'login' ? 'flex' : 'none';
+    document.getElementById('register-form').style.display = tab === 'register' ? 'flex' : 'none';
+    document.getElementById('login-error').textContent = '';
+    document.getElementById('register-error').textContent = '';
+}
+
+// ── Login ─────────────────────────────────────────────────
+async function handleLogin(event) {
+    event.preventDefault();
+    const btn = document.getElementById('login-btn');
+    setLoading(btn, true);
+
+    const username = document.getElementById('login-username').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    try {
+        const res = await fetch('/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Login failed');
+
+        sessionToken = data.token;
+        localStorage.setItem('college_token', sessionToken);
+        loginSuccess(data.user);
+    } catch (e) {
+        document.getElementById('login-error').textContent = e.message;
+    } finally {
+        setLoading(btn, false);
     }
 }
 
-function clearImage() {
-    currentImageB64 = null;
-    imageUpload.value = '';
-    imagePreviewContainer.style.display = 'none';
-    imagePreview.src = '';
+// ── Register ──────────────────────────────────────────────
+async function handleRegister(event) {
+    event.preventDefault();
+    const btn = document.getElementById('register-btn');
+    setLoading(btn, true);
+
+    const username = document.getElementById('reg-username').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const password = document.getElementById('reg-password').value;
+
+    try {
+        const res = await fetch('/auth/register', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, email, password })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || 'Registration failed');
+
+        // Auto login after register
+        await document.getElementById('login-username').setAttribute('value', username);
+        const loginRes = await fetch('/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username, password })
+        });
+        const loginData = await loginRes.json();
+        sessionToken = loginData.token;
+        localStorage.setItem('college_token', sessionToken);
+        loginSuccess(loginData.user);
+    } catch (e) {
+        document.getElementById('register-error').textContent = e.message;
+    } finally {
+        setLoading(btn, false);
+    }
 }
 
-userInput.addEventListener('keydown', function (e) {
+// ── Post Login Setup ──────────────────────────────────────
+function loginSuccess(user) {
+    currentUser = user;
+    document.getElementById('user-name').textContent = user.username;
+    document.getElementById('user-role').textContent = user.role;
+    document.getElementById('user-avatar').textContent = user.username[0].toUpperCase();
+    document.getElementById('my-api-key').textContent = user.api_key;
+
+    // Show admin nav if admin
+    if (user.role === 'admin') {
+        document.getElementById('nav-admin').style.display = 'flex';
+        loadAdminData();
+    }
+
+    showApp();
+    showView('chat');
+}
+
+async function fetchMe() {
+    try {
+        const res = await fetch('/auth/me', {
+            headers: { 'Authorization': `Bearer ${sessionToken}` }
+        });
+        if (!res.ok) return null;
+        return await res.json();
+    } catch { return null; }
+}
+
+function logout() {
+    localStorage.removeItem('college_token');
+    sessionToken = null;
+    currentUser = null;
+    showAuthScreen();
+}
+
+// ── Navigation ────────────────────────────────────────────
+function showView(name) {
+    ['chat', 'admin', 'apikey'].forEach(v => {
+        document.getElementById('view-' + v).classList.toggle('active', v === name);
+        const navBtn = document.getElementById('nav-' + v);
+        if (navBtn) navBtn.classList.toggle('active', v === name);
+    });
+    if (name === 'admin') loadAdminData();
+}
+
+// ── CHAT ──────────────────────────────────────────────────
+function quickPrompt(text) {
+    document.getElementById('user-input').value = text;
+    sendMessage();
+}
+
+function handleKey(e) {
     if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
         sendMessage();
     }
-});
+}
+
+function autoResize(el) {
+    el.style.height = 'auto';
+    el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+}
 
 async function sendMessage() {
-    const text = userInput.value.trim();
-    const apiKey = apiKeyInput.value.trim();
+    if (isGenerating) return;
+    const input = document.getElementById('user-input');
+    const text = input.value.trim();
+    if (!text) return;
 
-    if (!text && !currentImageB64) return;
-    if (!apiKey) {
-        alert("Please enter an API Key in the sidebar.");
-        return;
-    }
+    // Clear welcome msg
+    const welcome = document.querySelector('.welcome-msg');
+    if (welcome) welcome.remove();
 
-    // Add User Message to UI
-    appendMessage('user', text, currentImageB64);
+    addMessage('user', text);
+    input.value = '';
+    input.style.height = 'auto';
 
-    // Clear input
-    userInput.value = '';
-    const imgData = currentImageB64;
-    clearImage(); // reset
+    const botId = 'bot-' + Date.now();
+    addMessage('bot', '', botId);
+    isGenerating = true;
+    document.getElementById('send-btn').disabled = true;
 
-    // Create Bot Message placeholder
-    const botMsgId = 'msg-' + Date.now();
-    appendMessage('bot', '', null, botMsgId);
-    const botMsgContent = document.getElementById(botMsgId);
+    const botBubble = document.getElementById(botId);
+    botBubble.innerHTML = '<div class="typing-dots"><span></span><span></span><span></span></div>';
 
     try {
         const response = await fetch('/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'x-api-key': apiKey
+                'Authorization': `Bearer ${sessionToken}`
             },
-            body: JSON.stringify({
-                message: text,
-                image_b64: imgData
-            })
+            body: JSON.stringify({ message: text })
         });
 
         if (!response.ok) {
-            if (response.status === 401 || response.status === 403) {
-                botMsgContent.innerHTML = "<strong>Error:</strong> Invalid or Missing API Key.";
-                return;
-            }
-            throw new Error(`HTTP error! status: ${response.status}`);
+            const err = await response.json();
+            botBubble.innerHTML = `<span style="color:#ef4444">Error: ${err.detail || 'Unknown error'}</span>`;
+            return;
         }
 
         const reader = response.body.getReader();
-        const decoder = new TextDecoder("utf-8");
-        let fullText = "";
+        const decoder = new TextDecoder();
+        let full = '';
+        botBubble.innerHTML = '';
 
         while (true) {
             const { done, value } = await reader.read();
             if (done) break;
-            fullText += decoder.decode(value, { stream: true });
-            botMsgContent.innerHTML = parseMarkdown(fullText);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
+            full += decoder.decode(value, { stream: true });
+            botBubble.innerHTML = renderMarkdown(full);
+            scrollToBottom();
         }
     } catch (e) {
-        botMsgContent.innerHTML = `<strong>Error:</strong> Could not connect to H200 Cluster. (${e.message})`;
+        botBubble.innerHTML = `<span style="color:#ef4444">Connection error: ${e.message}</span>`;
+    } finally {
+        isGenerating = false;
+        document.getElementById('send-btn').disabled = false;
+        scrollToBottom();
     }
 }
 
-function appendMessage(sender, text, imageB64 = null, id = null) {
-    const msgDiv = document.createElement('div');
-    msgDiv.className = `message ${sender}-msg`;
+function addMessage(role, text, id = null) {
+    const msgs = document.getElementById('messages');
+    const div = document.createElement('div');
+    div.className = `msg ${role}`;
 
-    let contentHtml = `<div class="msg-content" ${id ? `id="${id}"` : ''}>`;
+    const avatar = role === 'user'
+        ? (currentUser?.username?.[0]?.toUpperCase() || 'U')
+        : '⚡';
 
-    if (imageB64) {
-        contentHtml += `<img src="${imageB64}" class="msg-image" style="max-width: 200px; border-radius: 8px; margin-bottom: 10px;">`;
-    }
-
-    contentHtml += `<span>${parseMarkdown(text)}</span></div>`;
-    msgDiv.innerHTML = contentHtml;
-
-    chatContainer.appendChild(msgDiv);
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+    div.innerHTML = `
+    <div class="msg-avatar">${avatar}</div>
+    <div class="msg-body">
+      <div class="msg-bubble" ${id ? `id="${id}"` : ''}>${text ? renderMarkdown(text) : ''}</div>
+    </div>`;
+    msgs.appendChild(div);
+    scrollToBottom();
 }
 
-// Simple markdown parsing for the streams
-function parseMarkdown(text) {
+function scrollToBottom() {
+    const msgs = document.getElementById('messages');
+    msgs.scrollTop = msgs.scrollHeight;
+}
+
+function renderMarkdown(text) {
     return text
-        .replace(/```([\s\S]*?)```/g, '<pre><code>$1</code></pre>')
-        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/```(\w*)\n([\s\S]*?)```/g, '<pre><code class="lang-$1">$2</code></pre>')
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        .replace(/^### (.+)$/gm, '<h3>$1</h3>')
+        .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+        .replace(/^# (.+)$/gm, '<h1>$1</h1>')
+        .replace(/^- (.+)$/gm, '<li>$1</li>')
+        .replace(/\n\n/g, '<br><br>')
         .replace(/\n/g, '<br>');
 }
 
-// --- Admin Panel Functions ---
-async function generateKey() {
-    const owner = document.getElementById('owner-name').value;
-    const master = document.getElementById('master-key').value;
+// ── ADMIN ─────────────────────────────────────────────────
+async function loadAdminData() {
+    try {
+        const headers = { 'Authorization': `Bearer ${sessionToken}` };
 
-    if (!owner || !master) {
-        alert("Fill both fields");
+        const [statsRes, usersRes] = await Promise.all([
+            fetch('/api/admin/stats', { headers }),
+            fetch('/api/admin/users', { headers })
+        ]);
+
+        const stats = await statsRes.json();
+        document.getElementById('stat-total').textContent = stats.total_users ?? '—';
+        document.getElementById('stat-students').textContent = stats.students ?? '—';
+        document.getElementById('stat-calls').textContent = stats.total_calls ?? '—';
+
+        const { users } = await usersRes.json();
+        renderUsersTable(users);
+    } catch (e) {
+        console.error('Admin data error:', e);
+    }
+}
+
+function renderUsersTable(users) {
+    const tbody = document.getElementById('users-tbody');
+    tbody.innerHTML = users.map(u => `
+    <tr>
+      <td><strong>${u.username}</strong></td>
+      <td>${u.email}</td>
+      <td><span class="role-badge ${u.role}">${u.role}</span></td>
+      <td><code class="key-code">${u.api_key.substring(0, 20)}...</code></td>
+      <td>${u.total_calls}</td>
+      <td>${new Date(u.created_at).toLocaleDateString()}</td>
+      <td>${u.role !== 'admin'
+            ? `<button class="del-btn" onclick="deactivateUser(${u.id})">Remove</button>`
+            : '—'}</td>
+    </tr>`).join('');
+}
+
+async function createStudent() {
+    const username = document.getElementById('new-username').value.trim();
+    const email = document.getElementById('new-email').value.trim();
+    const password = document.getElementById('new-password').value;
+
+    if (!username || !email || !password) {
+        document.getElementById('create-result').innerHTML = '<span style="color:#ef4444">Fill all fields.</span>';
         return;
     }
 
     try {
-        const res = await fetch('/api/admin/keys/generate', {
+        const res = await fetch('/auth/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ owner_name: owner, admin_key: master })
+            body: JSON.stringify({ username, email, password })
         });
-
         const data = await res.json();
-        const resultDiv = document.getElementById('new-key-result');
-        if (res.ok) {
-            resultDiv.innerHTML = `<div style="color: #10b981; margin-top: 15px;">
-                <strong>Key Generated:</strong><br>
-                <code style="background: #1e1e2d; padding: 10px; display: block; border-radius: 4px; margin: 10px 0; color: #fff;">${data.api_key}</code>
-                Give this strictly to ${data.owner}.
-            </div>`;
-        } else {
-            resultDiv.innerHTML = `<span style="color: #ef4444;">Error: ${data.detail}</span>`;
-        }
+        if (!res.ok) throw new Error(data.detail);
+
+        document.getElementById('create-result').innerHTML = `
+      <div style="color:#10b981;margin-top:10px;padding:12px;background:rgba(16,185,129,0.1);border-radius:8px;">
+        ✅ Account created for <strong>${username}</strong><br>
+        API Key: <code style="font-size:12px">${data.api_key}</code>
+      </div>`;
+        document.getElementById('new-username').value = '';
+        document.getElementById('new-email').value = '';
+        document.getElementById('new-password').value = '';
+        loadAdminData();
     } catch (e) {
-        alert("Server error.");
+        document.getElementById('create-result').innerHTML = `<span style="color:#ef4444">Error: ${e.message}</span>`;
     }
+}
+
+async function deactivateUser(userId) {
+    if (!confirm('Remove this user?')) return;
+    await fetch(`/api/admin/users/${userId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${sessionToken}` }
+    });
+    loadAdminData();
+}
+
+// ── API KEY ───────────────────────────────────────────────
+function copyKey() {
+    const key = document.getElementById('my-api-key').textContent;
+    navigator.clipboard.writeText(key).then(() => {
+        const btn = document.querySelector('.copy-btn');
+        btn.textContent = 'Copied!';
+        setTimeout(() => btn.textContent = 'Copy', 2000);
+    });
+}
+
+// ── Utility ───────────────────────────────────────────────
+function setLoading(btn, loading) {
+    btn.querySelector('.btn-text').style.display = loading ? 'none' : 'inline';
+    btn.querySelector('.btn-loader').style.display = loading ? 'inline' : 'none';
+    btn.disabled = loading;
 }

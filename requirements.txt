@@ -20,7 +20,8 @@ passlib[bcrypt]==1.7.4
 # Logging
 loguru==0.7.2
 
-# Data
+# Data & Database
+pymongo[srv]==4.6.1
 aiofiles==23.2.1
 pydantic==2.6.1
 

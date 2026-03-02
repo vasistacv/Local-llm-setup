@@ -14,23 +14,23 @@ from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from typing import Optional, List
 from loguru import logger
-import sqlite3, os
-from pathlib import Path
+import os
 
 from core.auth import (AuthManager, register_user, login_user,
                        validate_session, validate_api_key, list_users,
-                       delete_user, get_stats, init_db)
+                       delete_user, get_stats, init_db,
+                       create_conversation, list_conversations,
+                       get_messages, save_message, delete_conversation)
 from brain.college_brain import CollegeBrain
 
 app = FastAPI(title="JITD AI", version="6.0", docs_url=None, redoc_url=None)
 app.add_middleware(CORSMiddleware, allow_origins=["*"],
                    allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-ADMIN_KEY = os.environ.get("ADMIN_MASTER_KEY", "sk-admin-college-ai-h200-master-999")
-DB_PATH   = os.environ.get("API_DB_PATH", "data/memory/api_keys.db")
+ADMIN_KEY = os.environ.get("ADMIN_MASTER_KEY", "sk-admin-jitd-ai-master-999")
 
 brain = CollegeBrain()
-AuthManager(DB_PATH)
+AuthManager()   # Connects to MongoDB and creates indexes + admin account
 
 # ── Pydantic Models ────────────────────────────────────────
 class RegisterReq(BaseModel):
@@ -44,18 +44,13 @@ class LoginReq(BaseModel):
 
 class ChatReq(BaseModel):
     message: str
-    conversation_id: Optional[int] = None
+    conversation_id: Optional[str] = None   # MongoDB ObjectId string
 
 class APIKeyReq(BaseModel):
     owner_name: str
     admin_key: str
 
 # ── Auth Helpers ───────────────────────────────────────────
-def _get_conn():
-    db = Path(DB_PATH)
-    db.parent.mkdir(parents=True, exist_ok=True)
-    return sqlite3.connect(str(db))
-
 def get_current_user(request: Request) -> dict:
     token = request.headers.get("Authorization", "")
     if token.startswith("Bearer "):
@@ -101,55 +96,23 @@ async def me(user: dict = Depends(get_current_user)):
 # ── Conversation / Chat History ────────────────────────────
 @app.get("/conversations")
 async def list_convs(user: dict = Depends(get_current_user)):
-    conn = _get_conn()
-    try:
-        rows = conn.execute("""
-            SELECT id, title, created_at, updated_at FROM conversations
-            WHERE user_id=? ORDER BY updated_at DESC LIMIT 50
-        """, (user["id"],)).fetchall()
-        return {"conversations": [{"id": r[0], "title": r[1],
-                "created_at": r[2], "updated_at": r[3]} for r in rows]}
-    finally:
-        conn.close()
+    return {"conversations": list_conversations(user["id"])}
 
 @app.post("/conversations")
 async def new_conv(user: dict = Depends(get_current_user)):
-    conn = _get_conn()
-    try:
-        cur = conn.execute("INSERT INTO conversations (user_id) VALUES (?)", (user["id"],))
-        conn.commit()
-        return {"id": cur.lastrowid, "title": "New conversation"}
-    finally:
-        conn.close()
+    return create_conversation(user["id"])
 
 @app.get("/conversations/{conv_id}/messages")
-async def get_messages(conv_id: int, user: dict = Depends(get_current_user)):
-    conn = _get_conn()
-    try:
-        # Verify ownership
-        conv = conn.execute("SELECT id FROM conversations WHERE id=? AND user_id=?",
-                            (conv_id, user["id"])).fetchone()
-        if not conv:
-            raise HTTPException(404, "Conversation not found")
-        rows = conn.execute("""
-            SELECT role, content, model_used, created_at FROM messages
-            WHERE conversation_id=? ORDER BY id ASC
-        """, (conv_id,)).fetchall()
-        return {"messages": [{"role": r[0], "content": r[1],
-                "model": r[2], "time": r[3]} for r in rows]}
-    finally:
-        conn.close()
+async def conv_messages(conv_id: str, user: dict = Depends(get_current_user)):
+    msgs = get_messages(conv_id, user["id"])
+    if msgs is None:
+        raise HTTPException(404, "Conversation not found")
+    return {"messages": msgs}
 
 @app.delete("/conversations/{conv_id}")
-async def delete_conv(conv_id: int, user: dict = Depends(get_current_user)):
-    conn = _get_conn()
-    try:
-        conn.execute("DELETE FROM messages WHERE conversation_id=?", (conv_id,))
-        conn.execute("DELETE FROM conversations WHERE id=? AND user_id=?", (conv_id, user["id"]))
-        conn.commit()
-        return {"status": "deleted"}
-    finally:
-        conn.close()
+async def del_conv(conv_id: str, user: dict = Depends(get_current_user)):
+    delete_conversation(conv_id, user["id"])
+    return {"status": "deleted"}
 
 # ── Chat Endpoint ──────────────────────────────────────────
 @app.post("/chat")
@@ -157,18 +120,13 @@ async def chat(req: ChatReq, user: dict = Depends(get_current_user)):
     logger.info(f"[{user.get('username')}] → {req.message[:50]}...")
 
     # Get or create conversation
-    conn = _get_conn()
     conv_id = req.conversation_id
     if not conv_id:
-        cur = conn.execute("INSERT INTO conversations (user_id) VALUES (?)", (user["id"],))
-        conv_id = cur.lastrowid
-        conn.commit()
+        new = create_conversation(user["id"])
+        conv_id = new["id"]
 
     # Save user message
-    conn.execute("INSERT INTO messages (conversation_id, role, content) VALUES (?,?,?)",
-                 (conv_id, "user", req.message))
-    conn.execute("UPDATE users SET total_calls=total_calls+1 WHERE id=?", (user["id"],))
-    conn.commit()
+    save_message(conv_id, "user", req.message)
 
     full_response = []
 
@@ -181,22 +139,13 @@ async def chat(req: ChatReq, user: dict = Depends(get_current_user)):
             logger.error(f"Generation error: {e}")
             yield f"\n[Error]: {str(e)}"
         finally:
-            # Save assistant response
             response_text = "".join(full_response)
             if response_text:
                 try:
-                    c = _get_conn()
-                    # Auto-title from first message
                     title = req.message[:50] + ("…" if len(req.message) > 50 else "")
-                    c.execute("UPDATE conversations SET title=?, updated_at=datetime('now') WHERE id=?",
-                              (title, conv_id))
-                    c.execute("INSERT INTO messages (conversation_id, role, content) VALUES (?,?,?)",
-                              (conv_id, "assistant", response_text))
-                    c.commit()
-                    c.close()
+                    save_message(conv_id, "assistant", response_text, title=title)
                 except Exception as ex:
                     logger.error(f"Save error: {ex}")
-            conn.close()
 
     return StreamingResponse(event_stream(),
                              media_type="text/plain",
@@ -208,7 +157,7 @@ async def admin_users(admin: dict = Depends(require_admin)):
     return {"users": list_users()}
 
 @app.delete("/api/admin/users/{uid}")
-async def admin_del_user(uid: int, admin: dict = Depends(require_admin)):
+async def admin_del_user(uid: str, admin: dict = Depends(require_admin)):
     delete_user(uid)
     return {"status": "deactivated"}
 

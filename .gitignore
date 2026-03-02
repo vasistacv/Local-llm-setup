@@ -32,3 +32,10 @@ Thumbs.db
 # Temp
 *.tmp
 *.log
+
+# Environment secrets — NEVER commit
+.env
+
+# React build artifacts
+frontend/node_modules/
+frontend/dist/

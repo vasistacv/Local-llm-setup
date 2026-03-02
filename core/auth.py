@@ -11,6 +11,7 @@ import string
 import os
 from pathlib import Path
 from datetime import datetime, timedelta
+from typing import Optional
 from loguru import logger
 
 DB_PATH = os.environ.get("API_DB_PATH", "data/memory/api_keys.db")
@@ -117,7 +118,7 @@ def login_user(username: str, password: str) -> dict:
     finally:
         conn.close()
 
-def validate_session(token: str) -> dict | None:
+def validate_session(token: str) -> Optional[dict]:
     conn = _get_conn()
     try:
         row = conn.execute("""
@@ -129,7 +130,7 @@ def validate_session(token: str) -> dict | None:
     finally:
         conn.close()
 
-def validate_api_key(key: str) -> dict | None:
+def validate_api_key(key: str) -> Optional[dict]:
     conn = _get_conn()
     try:
         row = conn.execute("SELECT * FROM users WHERE api_key=? AND is_active=1", (key,)).fetchone()

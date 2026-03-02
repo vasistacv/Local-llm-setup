@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>College AI - H200 Enterprise</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="logo-icon">✨</span>
+                <h2>College AI <span class="badge">H200</span></h2>
+            </div>
+
+            <nav class="nav-links">
+                <a href="#chat" class="active">Chat Gateway</a>
+                <a href="#keys" onclick="showKeyManager()">API Keys</a>
+            </nav>
+
+            <div class="system-status">
+                <div class="status-indicator"></div>
+                <span>Cluster Online</span>
+            </div>
+
+            <!-- API Key Input for UI -->
+            <div class="api-key-section">
+                <label for="ui-api-key">Your API Key:</label>
+                <input type="password" id="ui-api-key" placeholder="sk-col-..." onchange="saveApiKey()">
+            </div>
+        </aside>
+
+        <!-- Main Chat Area -->
+        <main class="main-content" id="chat-view">
+            <header class="chat-header">
+                <h3>Massive GPU Cluster (70B+ Models)</h3>
+                <span class="model-badge">Auto-Routing: Coding | General | Vision</span>
+            </header>
+
+            <div class="chat-container" id="chat-container">
+                <div class="message system-msg">
+                    <div class="msg-content">
+                        <strong>College AI H200 Enterprise</strong>
+                        <p>Welcome to the multi-model supercluster. You must provide a valid API Key in the sidebar to
+                            communicate. Upload images to automatically trigger the Vision model.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="input-area">
+                <div class="input-wrapper">
+                    <!-- Image Upload Label -->
+                    <label for="image-upload" class="image-label" title="Upload Image for Vision Model">
+                        📸
+                    </label>
+                    <input type="file" id="image-upload" accept="image/*" style="display: none;"
+                        onchange="previewImage()">
+
+                    <textarea id="user-input"
+                        placeholder="Query the H200 Cluster... (Shift+Enter for new line)"></textarea>
+
+                    <button class="send-btn" onclick="sendMessage()">
+                        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13"></line>
+                            <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                        </svg>
+                    </button>
+                </div>
+                <!-- Image Preview Div -->
+                <div id="image-preview-container" style="display: none;">
+                    <img id="image-preview" src="" alt="Preview">
+                    <button onclick="clearImage()" class="clear-img-btn">✖</button>
+                </div>
+            </div>
+        </main>
+
+        <!-- Admin API Key Manager View -->
+        <main class="main-content" id="key-view" style="display: none;">
+            <header class="chat-header">
+                <h3>Admin API Key Manager</h3>
+            </header>
+            <div class="admin-container">
+                <div class="admin-box">
+                    <h4>Generate New Key</h4>
+                    <input type="text" id="owner-name" placeholder="User / Department Name">
+                    <input type="password" id="master-key" placeholder="Master Admin Key">
+                    <button onclick="generateKey()">Generate API Key</button>
+                    <div id="new-key-result"></div>
+                </div>
+            </div>
+        </main>
+
+    </div>
+    <script src="app.js"></script>
+</body>
+
+</html>

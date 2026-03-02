@@ -1,0 +1,41 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Virtual Environment (Windows - not needed on server)
+nova_env/
+
+# Ollama Binary (large - install fresh on server)
+ollama/
+ollama_bin/
+
+# Models & Data (large - pulled fresh on server)
+data/
+models/
+
+# Logs
+logs/
+*.log
+
+# Old archives
+archive/
+docs/
+
+# Zip files
+*.zip
+
+# SQLite databases (will be created fresh)
+*.db
+
+# Environment
+.env
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temp files
+*.tmp

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
 =============================================================
-COLLEGE AI ENTERPRISE - KUBEFLOW ONE-CLICK STARTER
+COLLEGE AI ENTERPRISE - ONE-CLICK KUBEFLOW STARTER
 =============================================================
-Run this after git clone on the Kubeflow server terminal:
+Just run this ONE command from anywhere in the project:
     python start.py
 =============================================================
 """
@@ -13,76 +13,80 @@ import subprocess
 import time
 from pathlib import Path
 
-HOME = Path.home()
-WORK_DIR = HOME / "AI_ASSISTANT"
-DATA_DIR = WORK_DIR / "data"
-MODELS_DIR = DATA_DIR / "models" / "ollama"
+# Auto-detect where this script lives (works anywhere on any OS)
+WORK_DIR  = Path(__file__).parent.resolve()
+DATA_DIR  = WORK_DIR / "data"
+LOG_DIR   = DATA_DIR / "logs"
+MEM_DIR   = DATA_DIR / "memory"
 
-# Models to use (H200 can handle 70B easily)
+# H200 Models
 MODEL_GENERAL = "llama3.1:70b"
 MODEL_CODING  = "qwen2.5-coder:72b"
 
-def run(cmd, **kwargs):
-    print(f"\n>> {cmd}")
-    return subprocess.run(cmd, shell=True, **kwargs)
-
 def banner(msg):
-    print(f"\n{'='*55}\n  {msg}\n{'='*55}")
+    print(f"\n{'='*55}\n  {msg}\n{'='*55}\n")
+
+def run(cmd, check=False):
+    print(f">> {cmd}")
+    return subprocess.run(cmd, shell=True, check=check)
+
+def ollama_running():
+    r = subprocess.run("curl -s http://localhost:11434/api/tags", shell=True, capture_output=True)
+    return r.returncode == 0
 
 def main():
-    banner("COLLEGE AI ENTERPRISE - KUBEFLOW STARTUP")
+    banner("COLLEGE AI ENTERPRISE — H200 KUBEFLOW STARTUP")
 
-    # 1. Create directories
+    # ── Step 1: Directories ───────────────────────────────
     banner("Step 1: Creating directories")
-    for d in [MODELS_DIR, DATA_DIR/"cache", DATA_DIR/"memory", DATA_DIR/"logs", DATA_DIR/"tmp"]:
+    for d in [LOG_DIR, MEM_DIR, DATA_DIR/"tmp"]:
         d.mkdir(parents=True, exist_ok=True)
     print("[OK] Directories ready")
 
-    # 2. Set environment
-    banner("Step 2: Setting environment")
-    os.environ["OLLAMA_MODELS"] = str(MODELS_DIR)
-    os.environ["OLLAMA_KEEP_ALIVE"] = "-1"
-    os.environ["TMPDIR"] = str(DATA_DIR / "tmp")
-    print(f"[OK] OLLAMA_MODELS = {MODELS_DIR}")
-
-    # 3. Install Python packages
-    banner("Step 3: Installing Python packages")
-    run(f"{sys.executable} -m pip install -r {WORK_DIR}/requirements.txt -q")
+    # ── Step 2: Python packages ───────────────────────────
+    banner("Step 2: Installing Python packages")
+    run(f"{sys.executable} -m pip install fastapi uvicorn requests loguru python-dotenv -q", check=True)
     print("[OK] Packages installed")
 
-    # 4. Install Ollama if not present
-    banner("Step 4: Checking Ollama")
+    # ── Step 3: Check/Install Ollama ──────────────────────
+    banner("Step 3: Checking Ollama")
     result = subprocess.run("which ollama", shell=True, capture_output=True)
     if result.returncode != 0:
         print("Ollama not found. Installing...")
-        run("curl -fsSL https://ollama.com/install.sh | sh")
+        run("curl -fsSL https://ollama.com/install.sh | sh", check=True)
     else:
-        print(f"[OK] Ollama already installed")
+        print("[OK] Ollama already installed at:", result.stdout.decode().strip())
 
-    # 5. Start Ollama server
-    banner("Step 5: Starting Ollama engine")
-    subprocess.Popen(
-        "ollama serve",
-        shell=True,
-        env=os.environ,
-        stdout=open(DATA_DIR/"logs"/"ollama.log", "w"),
-        stderr=subprocess.STDOUT
-    )
-    print("[OK] Ollama starting... waiting 8s")
-    time.sleep(8)
+    # ── Step 4: Start Ollama if not running ───────────────
+    banner("Step 4: Starting Ollama engine")
+    if ollama_running():
+        print("[OK] Ollama is already running!")
+    else:
+        print("Starting Ollama in background...")
+        log = open(LOG_DIR / "ollama.log", "w")
+        subprocess.Popen("ollama serve", shell=True, stdout=log, stderr=log)
+        print("Waiting for Ollama to be ready...")
+        for i in range(15):
+            time.sleep(2)
+            if ollama_running():
+                print("[OK] Ollama is ready!")
+                break
+            print(f"  Waiting... ({(i+1)*2}s)")
 
-    # 6. Pull models
-    banner("Step 6: Downloading AI Models")
+    # ── Step 5: Pull models ───────────────────────────────
+    banner("Step 5: Downloading AI Models")
     for model in [MODEL_GENERAL, MODEL_CODING]:
-        print(f"\n>> Pulling {model}...")
+        print(f"\n>> Pulling {model} (this may take a while)...")
         run(f"ollama pull {model}")
-        print(f"[OK] {model} ready")
+        print(f"[OK] {model} ready!")
 
-    # 7. Launch server
-    banner("Launching College AI Server on port 8000")
+    # ── Step 6: Launch server ─────────────────────────────
+    banner("Step 6: Launching College AI Server")
     os.chdir(WORK_DIR)
-    print("[INFO] Server starting at http://localhost:8000")
-    print("[INFO] Use Ctrl+C to stop\n")
+    print(f"[INFO] Working directory: {WORK_DIR}")
+    print("[INFO] Server will start at: http://0.0.0.0:8000")
+    print("[INFO] Admin Key: sk-admin-college-ai-h200-master-999")
+    print("[INFO] Press Ctrl+C to stop\n")
     run(f"{sys.executable} server.py")
 
 if __name__ == "__main__":

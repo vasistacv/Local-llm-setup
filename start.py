@@ -28,8 +28,8 @@ LOG_DIR  = DATA_DIR / "logs"
 MEM_DIR  = DATA_DIR / "memory"
 
 # ── 3 Advanced Models ──────────────────────────────────────
-MODEL_GENERAL = "llama3.1:70b"           # Most advanced general intelligence
-MODEL_CODING  = "qwen2.5-coder:32b"     # Most advanced coding model on Ollama
+MODEL_GENERAL = "qwen2.5:14b"            # Best general model fitting in 15.4GB GPU
+MODEL_CODING  = "qwen2.5-coder:14b"     # Best coding model fitting in 15.4GB GPU
 
 def banner(msg):
     print(f"\n{'='*60}\n  {msg}\n{'='*60}\n")
@@ -48,7 +48,7 @@ def ollama_running():
 def main():
     banner("COLLEGE AI ENTERPRISE — H200 KUBEFLOW STARTUP")
     print(f"  Project dir : {WORK_DIR}")
-    print(f"  Models      : {MODEL_GENERAL}, {MODEL_CODING}, {MODEL_VISION}")
+    print(f"  Models      : {MODEL_GENERAL} (General), {MODEL_CODING} (Coding)")
 
     # ── Step 1: Directories ───────────────────────────────
     banner("Step 1: Creating directories")

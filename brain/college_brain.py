@@ -17,8 +17,8 @@ class CollegeBrain:
     def __init__(self):
         # Always use localhost with http:// prefix
         self.ollama_host = "http://localhost:11434"
-        self.model_general = os.environ.get("LLM_MODEL_GENERAL", "llama3.1:70b")
-        self.model_coding  = os.environ.get("LLM_MODEL_CODING",  "qwen2.5-coder:32b")
+        self.model_general = os.environ.get("LLM_MODEL_GENERAL", "qwen2.5:14b")
+        self.model_coding  = os.environ.get("LLM_MODEL_CODING",  "qwen2.5-coder:14b")
 
         logger.info("🧠 College AI Brain Online.")
         logger.info(f"General Model : {self.model_general}")

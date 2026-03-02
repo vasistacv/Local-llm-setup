@@ -75,7 +75,7 @@ async function sendMessage() {
     const botMsgContent = document.getElementById(botMsgId);
 
     try {
-        const response = await fetch('http://localhost:8000/chat', {
+        const response = await fetch('/chat', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -147,7 +147,7 @@ async function generateKey() {
     }
 
     try {
-        const res = await fetch('http://localhost:8000/api/admin/keys/generate', {
+        const res = await fetch('/api/admin/keys/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ owner_name: owner, admin_key: master })

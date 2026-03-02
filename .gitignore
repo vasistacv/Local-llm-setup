@@ -1,41 +1,34 @@
-# Python
+# Python cache
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-.Python
 
-# Virtual Environment (Windows - not needed on server)
+# Virtual Environment (Windows - not needed on Linux server)
 nova_env/
 
-# Ollama Binary (large - install fresh on server)
+# Ollama Binary (install fresh on server via install.sh)
 ollama/
 ollama_bin/
 
-# Models & Data (large - pulled fresh on server)
+# Models & Large Data (pulled fresh by start.py on server)
 data/
-models/
 
-# Logs
-logs/
-*.log
-
-# Old archives
+# Old archives & docs
 archive/
 docs/
+logs/
 
 # Zip files
 *.zip
 
-# SQLite databases (will be created fresh)
+# SQLite databases (created fresh on server)
 *.db
 
-# Environment
-.env
-
-# OS
+# OS files
 .DS_Store
 Thumbs.db
 
-# Temp files
+# Temp
 *.tmp
+*.log

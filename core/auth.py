@@ -33,7 +33,9 @@ def init_db():
             role        TEXT    DEFAULT 'student',
             created_at  TEXT    DEFAULT (datetime('now')),
             is_active   INTEGER DEFAULT 1,
-            total_calls INTEGER DEFAULT 0
+            total_calls INTEGER DEFAULT 0,
+            google_id   TEXT    UNIQUE,
+            avatar_url  TEXT
         );
         CREATE TABLE IF NOT EXISTS sessions (
             token       TEXT PRIMARY KEY,
@@ -41,13 +43,20 @@ def init_db():
             created_at  TEXT DEFAULT (datetime('now')),
             expires_at  TEXT NOT NULL
         );
-        CREATE TABLE IF NOT EXISTS chat_history (
+        CREATE TABLE IF NOT EXISTS conversations (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id     INTEGER NOT NULL,
-            role        TEXT NOT NULL,
-            content     TEXT NOT NULL,
-            model_used  TEXT,
-            created_at  TEXT DEFAULT (datetime('now'))
+            title       TEXT    DEFAULT 'New conversation',
+            created_at  TEXT    DEFAULT (datetime('now')),
+            updated_at  TEXT    DEFAULT (datetime('now'))
+        );
+        CREATE TABLE IF NOT EXISTS messages (
+            id              INTEGER PRIMARY KEY AUTOINCREMENT,
+            conversation_id INTEGER NOT NULL,
+            role            TEXT NOT NULL,
+            content         TEXT NOT NULL,
+            model_used      TEXT,
+            created_at      TEXT DEFAULT (datetime('now'))
         );
     """)
     conn.commit()

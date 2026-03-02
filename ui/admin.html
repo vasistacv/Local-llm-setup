@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>College AI — Admin</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #f4f4f5
+        }
+
+        ::-webkit-scrollbar {
+            width: 4px
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #27272a;
+            border-radius: 4px
+        }
+
+        .layout {
+            display: flex;
+            height: 100vh
+        }
+
+        /* SIDEBAR */
+        .sb {
+            width: 230px;
+            background: #111113;
+            border-right: 1px solid #1c1c1e;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0
+        }
+
+        .sb-brand {
+            padding: 20px 16px;
+            border-bottom: 1px solid #1c1c1e
+        }
+
+        .brand-row {
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+        .bmark {
+            width: 34px;
+            height: 34px;
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px
+        }
+
+        .bname {
+            font-size: 16px;
+            font-weight: 700;
+            letter-spacing: -.3px
+        }
+
+        .badm {
+            font-size: 10px;
+            color: #fca5a5;
+            background: rgba(220, 38, 38, .15);
+            border: 1px solid rgba(220, 38, 38, .3);
+            padding: 2px 7px;
+            border-radius: 99px;
+            display: block;
+            margin-top: 3px;
+            width: fit-content
+        }
+
+        .sb-nav {
+            flex: 1;
+            padding: 8px
+        }
+
+        .nitem {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 9px 12px;
+            border-radius: 9px;
+            color: #a1a1aa;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all .15s;
+            border: none;
+            background: transparent;
+            font-family: inherit;
+            width: 100%;
+            text-align: left
+        }
+
+        .nitem:hover {
+            background: #18181b;
+            color: #f4f4f5
+        }
+
+        .nitem.on {
+            background: #1c1c1e;
+            color: #f4f4f5
+        }
+
+        .sb-foot {
+            padding: 12px;
+            border-top: 1px solid #1c1c1e
+        }
+
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 10px;
+            border-radius: 10px
+        }
+
+        .adm-av {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #dc2626, #b91c1c);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px
+        }
+
+        .adm-name {
+            font-size: 13px;
+            font-weight: 600
+        }
+
+        .adm-role {
+            font-size: 11px;
+            color: #71717a
+        }
+
+        .lo {
+            margin-left: auto;
+            color: #52525b;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 6px;
+            transition: color .15s;
+            border: none;
+            background: none
+        }
+
+        .lo:hover {
+            color: #a1a1aa
+        }
+
+        /* MAIN */
+        .main {
+            flex: 1;
+            overflow-y: auto;
+            padding: 32px 36px
+        }
+
+        /* TOPBAR */
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 32px
+        }
+
+        .page-title h1 {
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -.5px
+        }
+
+        .page-title p {
+            font-size: 13px;
+            color: #71717a;
+            margin-top: 4px
+        }
+
+        /* STATS */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 14px;
+            margin-bottom: 32px
+        }
+
+        .sc {
+            background: #111113;
+            border: 1px solid #1c1c1e;
+            border-radius: 14px;
+            padding: 20px 20px 16px
+        }
+
+        .sc-n {
+            font-size: 32px;
+            font-weight: 700;
+            letter-spacing: -1px;
+            background: linear-gradient(135deg, #f4f4f5, #a78bfa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent
+        }
+
+        .sc-l {
+            font-size: 12px;
+            color: #71717a;
+            margin-top: 4px;
+            font-weight: 500
+        }
+
+        .sc-icon {
+            font-size: 20px;
+            margin-bottom: 8px
+        }
+
+        /* SECTIONS */
+        .section {
+            background: #111113;
+            border: 1px solid #1c1c1e;
+            border-radius: 14px;
+            padding: 22px;
+            margin-bottom: 22px
+        }
+
+        .sec-hd {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 18px
+        }
+
+        .sec-hd h2 {
+            font-size: 15px;
+            font-weight: 600
+        }
+
+        /* CREATE FORM */
+        .cform {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap
+        }
+
+        .cform input {
+            flex: 1;
+            min-width: 140px;
+            background: #0a0a0a;
+            border: 1px solid #27272a;
+            border-radius: 9px;
+            color: #f4f4f5;
+            padding: 9px 13px;
+            font-size: 13px;
+            font-family: inherit;
+            outline: none
+        }
+
+        .cform input:focus {
+            border-color: #6d28d9
+        }
+
+        .cbtn {
+            background: #6d28d9;
+            color: #fff;
+            border: none;
+            border-radius: 9px;
+            padding: 9px 18px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background .2s;
+            white-space: nowrap
+        }
+
+        .cbtn:hover {
+            background: #5b21b6
+        }
+
+        .msg {
+            margin-top: 10px;
+            font-size: 13px;
+            padding: 10px 14px;
+            border-radius: 8px
+        }
+
+        .msg.ok {
+            background: rgba(16, 185, 129, .1);
+            color: #34d399;
+            border: 1px solid rgba(16, 185, 129, .2)
+        }
+
+        .msg.err {
+            background: rgba(239, 68, 68, .1);
+            color: #f87171;
+            border: 1px solid rgba(239, 68, 68, .2)
+        }
+
+        /* TABLE */
+        .tw {
+            overflow-x: auto;
+            border-radius: 10px;
+            border: 1px solid #1c1c1e
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse
+        }
+
+        th {
+            background: #18181b;
+            padding: 11px 14px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: .5px
+        }
+
+        td {
+            padding: 12px 14px;
+            font-size: 13px;
+            border-top: 1px solid #1c1c1e
+        }
+
+        tr:hover td {
+            background: #111113
+        }
+
+        .rb {
+            padding: 2px 8px;
+            border-radius: 99px;
+            font-size: 11px;
+            font-weight: 600
+        }
+
+        .rb.admin {
+            background: rgba(220, 38, 38, .15);
+            color: #fca5a5
+        }
+
+        .rb.student {
+            background: rgba(109, 40, 217, .15);
+            color: #a78bfa
+        }
+
+        .rb.active {
+            background: rgba(16, 185, 129, .15);
+            color: #34d399
+        }
+
+        .rb.inactive {
+            background: rgba(239, 68, 68, .1);
+            color: #f87171
+        }
+
+        .key-mono {
+            font-family: monospace;
+            font-size: 11px;
+            color: #71717a
+        }
+
+        .dbtn {
+            background: rgba(239, 68, 68, .1);
+            border: 1px solid rgba(239, 68, 68, .25);
+            color: #f87171;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all .2s;
+            font-family: inherit
+        }
+
+        .dbtn:hover {
+            background: rgba(239, 68, 68, .2)
+        }
+
+        /* Tabs */
+        .tab-row {
+            display: flex;
+            gap: 4px;
+            border-bottom: 1px solid #1c1c1e;
+            margin-bottom: 20px
+        }
+
+        .stab {
+            padding: 10px 16px;
+            border: none;
+            background: transparent;
+            color: #71717a;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            border-bottom: 2px solid transparent;
+            transition: all .2s;
+            margin-bottom: -1px
+        }
+
+        .stab.on {
+            color: #f4f4f5;
+            border-bottom-color: #6d28d9
+        }
+    </style>
+</head>
+
+<body>
+    <div class="layout">
+        <!-- SIDEBAR -->
+        <aside class="sb">
+            <div class="sb-brand">
+                <div class="brand-row">
+                    <div class="bmark">⚙️</div>
+                    <div>
+                        <div class="bname">College AI</div>
+                        <span class="badm">Admin Portal</span>
+                    </div>
+                </div>
+            </div>
+            <div class="sb-nav">
+                <button class="nitem on" id="n-dash" onclick="show('dash')">📊 Dashboard</button>
+                <button class="nitem" id="n-users" onclick="show('users')">👥 Users</button>
+                <button class="nitem" id="n-create" onclick="show('create')">➕ Create Account</button>
+                <button class="nitem" onclick="window.location='/chat.html'">💬 Go to Chat</button>
+            </div>
+            <div class="sb-foot">
+                <div class="admin-info">
+                    <div class="adm-av" id="a-av">A</div>
+                    <div>
+                        <div class="adm-name" id="a-name">Admin</div>
+                        <div class="adm-role">Administrator</div>
+                    </div>
+                    <button class="lo" onclick="logout()" title="Sign out">
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                            <polyline points="16 17 21 12 16 7" />
+                            <line x1="21" y1="12" x2="9" y2="12" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN -->
+        <main class="main">
+
+            <!-- DASHBOARD -->
+            <div id="v-dash">
+                <div class="topbar">
+                    <div class="page-title">
+                        <h1>Dashboard</h1>
+                        <p>Platform overview and stats</p>
+                    </div>
+                    <button class="cbtn" onclick="loadAll()">↻ Refresh</button>
+                </div>
+                <div class="stats">
+                    <div class="sc">
+                        <div class="sc-icon">👥</div>
+                        <div class="sc-n" id="s-total">—</div>
+                        <div class="sc-l">Total Users</div>
+                    </div>
+                    <div class="sc">
+                        <div class="sc-icon">🎓</div>
+                        <div class="sc-n" id="s-st">—</div>
+                        <div class="sc-l">Students</div>
+                    </div>
+                    <div class="sc">
+                        <div class="sc-icon">💬</div>
+                        <div class="sc-n" id="s-q">—</div>
+                        <div class="sc-l">Total Queries</div>
+                    </div>
+                    <div class="sc">
+                        <div class="sc-icon">🤖</div>
+                        <div class="sc-n">2</div>
+                        <div class="sc-l">Active Models</div>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="sec-hd">
+                        <h2>System Status</h2><span style="color:#34d399;font-size:13px;font-weight:600">● All systems
+                            operational</span>
+                    </div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+                        <div style="background:#0a0a0a;border:1px solid #1c1c1e;border-radius:10px;padding:14px">
+                            <div style="font-size:12px;color:#71717a;margin-bottom:4px">General AI Model</div>
+                            <div style="font-size:14px;font-weight:600;color:#a78bfa">qwen2.5:14b</div>
+                        </div>
+                        <div style="background:#0a0a0a;border:1px solid #1c1c1e;border-radius:10px;padding:14px">
+                            <div style="font-size:12px;color:#71717a;margin-bottom:4px">Code AI Model</div>
+                            <div style="font-size:14px;font-weight:600;color:#60a5fa">qwen2.5-coder:14b</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- USERS TABLE -->
+            <div id="v-users" style="display:none">
+                <div class="topbar">
+                    <div class="page-title">
+                        <h1>Users</h1>
+                        <p>Manage all student accounts</p>
+                    </div>
+                    <button class="cbtn" onclick="loadUsers()">↻ Refresh</button>
+                </div>
+                <div class="section" style="padding:0">
+                    <div class="tw">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>API Key</th>
+                                    <th>Queries</th>
+                                    <th>Status</th>
+                                    <th>Created</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="utbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- CREATE ACCOUNT -->
+            <div id="v-create" style="display:none">
+                <div class="topbar">
+                    <div class="page-title">
+                        <h1>Create Account</h1>
+                        <p>Add a new student to the platform</p>
+                    </div>
+                </div>
+                <div class="section">
+                    <div class="cform">
+                        <input id="cu" placeholder="Username" />
+                        <input id="ce" type="email" placeholder="Email address" />
+                        <input id="cp" type="password" placeholder="Password (min 6 chars)" />
+                        <button class="cbtn" onclick="createUser()">Create Account</button>
+                    </div>
+                    <div id="cr"></div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        const token = localStorage.getItem('college_token');
+        if (!token) { window.location = '/'; throw 0; }
+        const H = { headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' } };
+
+        fetch('/auth/me', H).then(r => r.ok ? r.json() : null).then(u => {
+            if (!u || u.role !== 'admin') { window.location = '/chat.html'; return; }
+            document.getElementById('a-name').textContent = u.username;
+            document.getElementById('a-av').textContent = u.username[0].toUpperCase();
+            loadAll();
+        });
+
+        function logout() { localStorage.removeItem('college_token'); window.location = '/'; }
+        function show(v) {
+            ['dash', 'users', 'create'].forEach(x => {
+                document.getElementById('v-' + x).style.display = x === v ? 'block' : 'none';
+                document.getElementById('n-' + x)?.classList.toggle('on', x === v);
+            });
+            if (v === 'users') loadUsers();
+            if (v === 'dash') loadStats();
+        }
+
+        async function loadAll() { loadStats(); loadUsers(); }
+
+        async function loadStats() {
+            const r = await fetch('/api/admin/stats', H);
+            const d = await r.json();
+            document.getElementById('s-total').textContent = d.total_users ?? '—';
+            document.getElementById('s-st').textContent = d.students ?? '—';
+            document.getElementById('s-q').textContent = d.total_calls ?? '—';
+        }
+
+        async function loadUsers() {
+            const r = await fetch('/api/admin/users', H);
+            const { users } = await r.json();
+            document.getElementById('utbody').innerHTML = users.map(u => `
+    <tr>
+      <td><strong>${u.username}</strong></td>
+      <td style="color:#71717a">${u.email}</td>
+      <td><span class="rb ${u.role}">${u.role}</span></td>
+      <td><span class="key-mono">${u.api_key.slice(0, 22)}…</span></td>
+      <td>${u.total_calls}</td>
+      <td><span class="rb ${u.is_active ? 'active' : 'inactive'}">${u.is_active ? 'Active' : 'Removed'}</span></td>
+      <td style="color:#71717a">${new Date(u.created_at).toLocaleDateString()}</td>
+      <td>${u.role !== 'admin' ? `<button class="dbtn" onclick="remove(${u.id})">Remove</button>` : '—'}</td>
+    </tr>`).join('');
+        }
+
+        async function createUser() {
+            const u = document.getElementById('cu').value.trim(), e = document.getElementById('ce').value.trim(), p = document.getElementById('cp').value;
+            if (!u || !e || !p) { showMsg('cr', 'Please fill all fields.', 'err'); return; }
+            const r = await fetch('/auth/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: u, email: e, password: p }) });
+            const d = await r.json();
+            if (!r.ok) { showMsg('cr', d.detail || 'Error', 'err'); return; }
+            showMsg('cr', `✅ Account created! API Key: ${d.api_key}`, 'ok');
+            document.getElementById('cu').value = document.getElementById('ce').value = document.getElementById('cp').value = '';
+            loadStats();
+        }
+
+        async function remove(id) {
+            if (!confirm('Remove this user? They will lose access.')) return;
+            await fetch('/api/admin/users/' + id, { method: 'DELETE', ...H });
+            loadUsers(); loadStats();
+        }
+
+        function showMsg(id, txt, cls) {
+            const el = document.getElementById(id);
+            el.innerHTML = `<div class="msg ${cls}">${txt}</div>`;
+            setTimeout(() => el.innerHTML = '', 6000);
+        }
+    </script>
+</body>
+
+</html>

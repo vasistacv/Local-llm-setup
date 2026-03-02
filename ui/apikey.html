@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>College AI — My API Key</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0
+        }
+
+        html,
+        body {
+            height: 100%;
+            font-family: 'Inter', sans-serif;
+            background: #0a0a0a;
+            color: #f4f4f5;
+            display: flex;
+            align-items: center;
+            justify-content: center
+        }
+
+        .card {
+            width: 100%;
+            max-width: 560px;
+            padding: 36px;
+            background: #111113;
+            border: 1px solid #1c1c1e;
+            border-radius: 18px
+        }
+
+        .top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 28px
+        }
+
+        .top h1 {
+            font-size: 20px;
+            font-weight: 700
+        }
+
+        .back {
+            color: #71717a;
+            font-size: 13px;
+            text-decoration: none;
+            padding: 7px 14px;
+            background: #18181b;
+            border-radius: 8px;
+            transition: all .15s
+        }
+
+        .back:hover {
+            color: #f4f4f5;
+            background: #27272a
+        }
+
+        label {
+            font-size: 11px;
+            font-weight: 600;
+            color: #71717a;
+            text-transform: uppercase;
+            letter-spacing: .5px;
+            display: block;
+            margin-bottom: 8px
+        }
+
+        .keybox {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #0a0a0a;
+            border: 1px solid #27272a;
+            border-radius: 10px;
+            padding: 13px 16px;
+            margin-bottom: 24px
+        }
+
+        #mykey {
+            flex: 1;
+            font-family: 'Fira Code', monospace;
+            font-size: 13px;
+            color: #a78bfa;
+            word-break: break-all
+        }
+
+        .copy {
+            background: #6d28d9;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            padding: 7px 14px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background .2s
+        }
+
+        .copy:hover {
+            background: #5b21b6
+        }
+
+        .usage pre {
+            background: #0a0a0a;
+            border: 1px solid #1c1c1e;
+            border-radius: 10px;
+            padding: 16px;
+            overflow-x: auto
+        }
+
+        .usage code {
+            font-family: 'Fira Code', monospace;
+            font-size: 12px;
+            color: #a78bfa;
+            line-height: 1.7
+        }
+
+        h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+        <div class="top">
+            <h1>🔑 My API Key</h1>
+            <a href="/chat.html" class="back">← Back to Chat</a>
+        </div>
+        <label>Your Personal API Key</label>
+        <div class="keybox"><span id="mykey">Loading...</span><button class="copy" onclick="copy()">Copy</button></div>
+        <div class="usage">
+            <h3>Usage Example</h3>
+            <pre><code id="ex">Loading...</code></pre>
+        </div>
+    </div>
+    <script>
+        const token = localStorage.getItem('college_token');
+        if (!token) { window.location = '/'; throw 0; }
+        fetch('/auth/me', { headers: { Authorization: 'Bearer ' + token } }).then(r => r.ok ? r.json() : null).then(u => {
+            if (!u) { window.location = '/'; return; }
+            document.getElementById('mykey').textContent = u.api_key;
+            document.getElementById('ex').textContent = `curl -X POST https://your-url.trycloudflare.com/chat \\\n  -H "x-api-key: ${u.api_key}" \\\n  -H "Content-Type: application/json" \\\n  -d '{"message": "Hello!"}'`;
+        });
+        function copy() {
+            navigator.clipboard.writeText(document.getElementById('mykey').textContent);
+            const b = document.querySelector('.copy'); b.textContent = 'Copied!'; setTimeout(() => b.textContent = 'Copy', 2000);
+        }
+    </script>
+</body>
+
+</html>

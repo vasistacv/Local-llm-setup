@@ -39,7 +39,6 @@ ADMIN_KEY = os.environ.get("ADMIN_MASTER_KEY", "sk-admin-college-ai-h200-master-
 # --- DATA MODELS ---
 class ChatRequest(BaseModel):
     message: str
-    image_b64: Optional[str] = None # Support for Vision Requests
 
 class APIKeyRequest(BaseModel):
     owner_name: str
@@ -100,7 +99,7 @@ async def chat_endpoint(request: ChatRequest, api_key: str = Depends(verify_api_
     
     def event_stream():
         try:
-            for text_chunk in brain.process_request(request.message, request.image_b64):
+            for text_chunk in brain.process_request(request.message):
                 yield text_chunk
         except Exception as e:
             logger.error(f"Generation error: {e}")

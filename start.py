@@ -29,8 +29,7 @@ MEM_DIR  = DATA_DIR / "memory"
 
 # ── 3 Advanced Models ──────────────────────────────────────
 MODEL_GENERAL = "llama3.1:70b"           # Most advanced general intelligence
-MODEL_CODING  = "qwen2.5-coder:32b"     # Most advanced coding model on Ollama (no 72b exists)
-MODEL_VISION  = "llama3.2-vision:90b"   # Most advanced vision model — 90B!
+MODEL_CODING  = "qwen2.5-coder:32b"     # Most advanced coding model on Ollama
 
 def banner(msg):
     print(f"\n{'='*60}\n  {msg}\n{'='*60}\n")
@@ -91,7 +90,6 @@ def main():
     for model, desc in [
         (MODEL_GENERAL, "General Intelligence — 70B"),
         (MODEL_CODING,  "Coding Expert       — 32B"),
-        (MODEL_VISION,  "Vision & Images     — 11B"),
     ]:
         print(f"\n>> Pulling {model} ({desc})...")
         subprocess.run(f"ollama pull {model}", shell=True)

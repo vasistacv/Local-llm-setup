@@ -28,9 +28,9 @@ LOG_DIR  = DATA_DIR / "logs"
 MEM_DIR  = DATA_DIR / "memory"
 
 # ── 3 Advanced Models ──────────────────────────────────────
-MODEL_GENERAL = "llama3.1:70b"          # Best general intelligence on H200
-MODEL_CODING  = "qwen2.5-coder:32b"     # Best coding model on Ollama
-MODEL_VISION  = "llama3.2-vision:11b"   # Best vision/image model on Ollama
+MODEL_GENERAL = "llama3.1:70b"           # Most advanced general intelligence
+MODEL_CODING  = "qwen2.5-coder:32b"     # Most advanced coding model on Ollama (no 72b exists)
+MODEL_VISION  = "llama3.2-vision:90b"   # Most advanced vision model — 90B!
 
 def banner(msg):
     print(f"\n{'='*60}\n  {msg}\n{'='*60}\n")

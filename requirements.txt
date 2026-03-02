@@ -1,5 +1,28 @@
-fastapi
-uvicorn
-requests
-loguru
-python-dotenv
+# JITD AI — Python Requirements
+# Install: pip install -r requirements.txt
+
+# Web server
+fastapi==0.110.0
+uvicorn[standard]==0.27.1
+python-multipart==0.0.9
+
+# HTTP & requests
+httpx==0.27.0
+requests==2.31.0
+
+# AI / Ollama
+ollama==0.1.8
+
+# Auth & security
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Logging
+loguru==0.7.2
+
+# Data
+aiofiles==23.2.1
+pydantic==2.6.1
+
+# Google OAuth (optional)
+authlib==1.3.0

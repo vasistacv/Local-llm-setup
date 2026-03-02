@@ -599,11 +599,11 @@
     </div>
 
     <script>
-        let token = localStorage.getItem('college_token'), me = null, busy = false;
+        let token = localStorage.getItem('jitd_token'), me = null, busy = false, convId = null;
         if (!token) { window.location = '/'; throw 0; }
 
         fetch('/auth/me', { headers: { Authorization: 'Bearer ' + token } }).then(r => r.ok ? r.json() : null).then(u => {
-            if (!u) { localStorage.removeItem('college_token'); window.location = '/'; return; }
+            if (!u) { localStorage.removeItem('jitd_token'); window.location = '/'; return; }
             me = u;
             document.getElementById('uname').textContent = u.username;
             document.getElementById('uemail').textContent = u.email || '';

@@ -126,3 +126,4 @@ INSTRUCTIONS:
 
 # Global instance
 config = Config()
+settings = config  # Alias — both 'config' and 'settings' work as imports

@@ -7,8 +7,8 @@ class Config:
     """NOVA Configuration Manager - UNIVERSAL FIX"""
     
     def __init__(self):
-        # Paths
-        self.BASE_DIR = Path("d:/AI_ASSISTANT")
+        # Paths — Dynamic resolution works on BOTH Windows and Linux
+        self.BASE_DIR = Path(__file__).parent.parent.resolve()
         self.ENV_FILE = self.BASE_DIR / "config" / "settings.env"
         
         # Load environment variables

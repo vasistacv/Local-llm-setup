@@ -18,9 +18,9 @@ WORK_DIR = HOME / "AI_ASSISTANT"
 DATA_DIR = WORK_DIR / "data"
 MODELS_DIR = DATA_DIR / "models" / "ollama"
 
-# Models to use
-MODEL_GENERAL = "llama3.2:3b"
-MODEL_CODING  = "qwen2.5-coder:3b"
+# Models to use (H200 can handle 70B easily)
+MODEL_GENERAL = "llama3.1:70b"
+MODEL_CODING  = "qwen2.5-coder:72b"
 
 def run(cmd, **kwargs):
     print(f"\n>> {cmd}")

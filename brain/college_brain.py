@@ -15,10 +15,15 @@ from config.config import settings
 
 class CollegeBrain:
     def __init__(self):
-        self.ollama_host = settings.OLLAMA_HOST
+        # Always use localhost with http:// prefix — 0.0.0.0 doesn't work as client address
+        host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+        if not host.startswith("http"):
+            host = f"http://localhost:11434"  # Force correct format
+        self.ollama_host = "http://localhost:11434"  # Always localhost for client
         self.model_general = os.environ.get("LLM_MODEL_GENERAL", "llama3.1:70b")
-        self.model_coding = os.environ.get("LLM_MODEL_CODING", "qwen2.5-coder:72b")
+        self.model_coding = os.environ.get("LLM_MODEL_CODING", "qwen2.5-coder:32b")
         self.model_vision = os.environ.get("LLM_MODEL_VISION", "llama3.2-vision:90b")
+
         
         logger.info(f"🧠 Massive Cluster Brain Online.")
         logger.info(f"General Model: {self.model_general}")
